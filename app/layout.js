@@ -1,4 +1,13 @@
+import './globals.css';
+
 export const metadata = { title: 'Products CRUD' };
+
 export default function Layout({ children }) {
-  return <html lang="en"><body style={{ fontFamily: 'system-ui', maxWidth: 760, margin: '2rem auto', padding: '0 1rem' }}>{children}</body></html>;
+  return (
+    <html lang="en">
+      <body>
+        <div className="wrap">{children}</div>
+      </body>
+    </html>
+  );
 }
