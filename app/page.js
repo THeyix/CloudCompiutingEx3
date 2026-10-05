@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const dateOnly = (d) => (d ? String(d).slice(0, 10) : '');
 
@@ -15,7 +16,6 @@ export default function Home() {
       const json = await res.json();
       if (!res.ok || !Array.isArray(json)) throw new Error(json.error || 'Failed to load');
       setItems(json);
-      setMsg('');
     } catch (e) {
       setMsg(e.message);
     }
@@ -47,15 +47,21 @@ export default function Home() {
   }
 
   async function remove(id) {
+    if (!confirm('Delete this product?')) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) setMsg(json.error || 'Delete failed');
-      else setMsg('');
+      setMsg(res.ok ? '' : json.error || 'Delete failed');
     } catch (err) {
       setMsg(err.message);
     }
     load();
+  }
+
+  function startEdit(p) {
+    setEditing(p);
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const f = editing || {};
@@ -63,24 +69,45 @@ export default function Home() {
   return (
     <>
       <h1>Products</h1>
+      <p className="subtitle">Create, view, edit and delete products.</p>
 
-      {msg && <div className="card error">⚠ {msg}</div>}
+      {msg && <div className="alert">⚠ {msg}</div>}
 
       <div className="card">
+        <h2>{editing ? `Edit: ${editing.name}` : 'Add new product'}</h2>
         <form key={editing?.id ?? 'new'} onSubmit={submit}>
-          <input name="name" placeholder="Name (text)" defaultValue={f.name} />
-          <input name="price" placeholder="Price (number)" defaultValue={f.price} />
-          <select name="inStock" defaultValue={String(f.in_stock ?? true)}>
-            <option value="true">In stock</option>
-            <option value="false">Out of stock</option>
-          </select>
-          <input name="releaseDate" type="date" defaultValue={dateOnly(f.release_date)} />
-          <input name="image" type="file" accept="image/*" />
+          <div className="grid2">
+            <label>
+              Name (text)
+              <input name="name" placeholder="e.g. Coffee mug" defaultValue={f.name} />
+            </label>
+            <label>
+              Price (number)
+              <input name="price" placeholder="e.g. 9.99" defaultValue={f.price} />
+            </label>
+          </div>
+          <div className="grid2">
+            <label>
+              Availability (boolean)
+              <select name="inStock" defaultValue={String(f.in_stock ?? true)}>
+                <option value="true">In stock</option>
+                <option value="false">Out of stock</option>
+              </select>
+            </label>
+            <label>
+              Release date (date)
+              <input name="releaseDate" type="date" defaultValue={dateOnly(f.release_date)} />
+            </label>
+          </div>
+          <label>
+            Image (file){editing && ' – leave empty to keep current'}
+            <input name="image" type="file" accept="image/*" />
+          </label>
           {Object.entries(errors).map(([k, v]) => (
-            <span key={k} className="error">{k}: {v}</span>
+            <span key={k} className="error">• {k}: {v}</span>
           ))}
           <div className="actions">
-            <button type="submit">{editing ? 'Update' : 'Create'}</button>
+            <button type="submit">{editing ? 'Update product' : 'Create product'}</button>
             {editing && (
               <button type="button" className="secondary" onClick={() => setEditing(null)}>
                 Cancel
@@ -90,24 +117,42 @@ export default function Home() {
         </form>
       </div>
 
-      {items.map((p) => (
-        <div key={p.id} className="card item">
-          {p.image_url ? <img src={p.image_url} alt={p.name} /> : <div className="ph" />}
-          <div className="info">
-            <b>{p.name}</b> · ${p.price}
-            <div className="muted">
-              {p.in_stock ? 'In stock' : 'Out of stock'} · release {dateOnly(p.release_date)}
+      <div className="list-head">
+        <h2 style={{ margin: 0 }}>All products</h2>
+        <span className="count">{items.length} total</span>
+      </div>
+
+      {items.length === 0 && <div className="empty">No products yet. Add your first one above.</div>}
+
+      <div className="products">
+        {items.map((p) => (
+          <div key={p.id} className="card product">
+            <Link href={`/products/${p.id}`}>
+              {p.image_url
+                ? <img className="thumb" src={p.image_url} alt={p.name} />
+                : <div className="thumb ph">No image</div>}
+            </Link>
+            <div className="product-body">
+              <Link href={`/products/${p.id}`}><h3>{p.name}</h3></Link>
+              <div className="price">${p.price}</div>
+              <div className="badges">
+                <span className={p.in_stock ? 'badge ok' : 'badge out'}>
+                  {p.in_stock ? 'In stock' : 'Out of stock'}
+                </span>
+                <span className={p.released ? 'badge ok' : 'badge'}>
+                  {p.released ? 'Released' : 'Upcoming'}
+                </span>
+              </div>
+              <span className="muted">Release: {dateOnly(p.release_date)}</span>
             </div>
-            <span className={p.released ? 'badge ok' : 'badge'}>
-              {p.released ? 'Released' : 'Upcoming'}
-            </span>
+            <div className="product-actions">
+              <Link href={`/products/${p.id}`} className="btn secondary">View</Link>
+              <button type="button" className="secondary" onClick={() => startEdit(p)}>Edit</button>
+              <button type="button" className="danger" onClick={() => remove(p.id)}>Delete</button>
+            </div>
           </div>
-          <div className="actions">
-            <button type="button" className="secondary" onClick={() => setEditing(p)}>Edit</button>
-            <button type="button" className="danger" onClick={() => remove(p.id)}>Delete</button>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </>
   );
 }
