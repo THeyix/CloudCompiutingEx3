@@ -127,13 +127,11 @@ export default function Home() {
       <div className="products">
         {items.map((p) => (
           <div key={p.id} className="card product">
-            <Link href={`/products/${p.id}`}>
-              {p.image_url
-                ? <img className="thumb" src={p.image_url} alt={p.name} />
-                : <div className="thumb ph">No image</div>}
-            </Link>
+            {p.image_url
+              ? <img className="thumb" src={p.image_url} alt={p.name} />
+              : <div className="thumb ph">No image</div>}
             <div className="product-body">
-              <Link href={`/products/${p.id}`}><h3>{p.name}</h3></Link>
+              <h3>{p.name}</h3>
               <div className="price">${p.price}</div>
               <div className="badges">
                 <span className={p.in_stock ? 'badge ok' : 'badge out'}>
@@ -146,7 +144,7 @@ export default function Home() {
               <span className="muted">Release: {dateOnly(p.release_date)}</span>
             </div>
             <div className="product-actions">
-              <Link href={`/products/${p.id}`} className="btn secondary">View</Link>
+              <Link href={`/products/${p.id}`} className="btn">View</Link>
               <button type="button" className="secondary" onClick={() => startEdit(p)}>Edit</button>
               <button type="button" className="danger" onClick={() => remove(p.id)}>Delete</button>
             </div>
