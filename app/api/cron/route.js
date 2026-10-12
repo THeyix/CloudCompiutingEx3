@@ -1,6 +1,5 @@
 import { sql, init } from '@/lib/db';
 
-// Background job (Vercel Cron, hourly): flag products whose release date has arrived
 export async function GET(req) {
   if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`)
     return new Response('Unauthorized', { status: 401 });
