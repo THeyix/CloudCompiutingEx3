@@ -144,7 +144,7 @@ export default function Home() {
               <span className="muted">Release: {dateOnly(p.release_date)}</span>
             </div>
             <div className="product-actions">
-              <Link href={`/products/${p.id}`} className="btn">View</Link>
+              <Link href={`/product?id=${p.id}`} className="btn">View</Link>
               <button type="button" className="secondary" onClick={() => startEdit(p)}>Edit</button>
               <button type="button" className="danger" onClick={() => remove(p.id)}>Delete</button>
             </div>
