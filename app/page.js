@@ -1,14 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 const dateOnly = (d) => (d ? String(d).slice(0, 10) : '');
 
 export default function Home() {
   const [items, setItems] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(null);
   const [errors, setErrors] = useState({});
   const [msg, setMsg] = useState('');
+  const [viewId, setViewId] = useState(null);
 
   async function load() {
     try {
@@ -19,8 +20,13 @@ export default function Home() {
     } catch (e) {
       setMsg(e.message);
     }
+    setLoaded(true);
   }
-  useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    setViewId(new URLSearchParams(window.location.search).get('id'));
+    load();
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -64,6 +70,47 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /* ---------- DETAIL VIEW (READ) ---------- */
+  if (viewId) {
+    const p = items.find((x) => String(x.id) === String(viewId));
+    return (
+      <>
+        <a href="/" className="btn secondary">← Back to list</a>
+
+        {!loaded && <p className="muted" style={{ marginTop: 16 }}>Loading…</p>}
+        {loaded && !p && <div className="alert" style={{ marginTop: 16 }}>⚠ Product not found</div>}
+
+        {p && (
+          <div className="card detail" style={{ marginTop: 16 }}>
+            {p.image_url
+              ? <img className="detail-img" src={p.image_url} alt={p.name} />
+              : <div className="detail-img ph">No image</div>}
+
+            <div className="detail-info">
+              <h1>{p.name}</h1>
+              <div className="price big">${p.price}</div>
+              <div className="badges">
+                <span className={p.in_stock ? 'badge ok' : 'badge out'}>
+                  {p.in_stock ? 'In stock' : 'Out of stock'}
+                </span>
+                <span className={p.released ? 'badge ok' : 'badge'}>
+                  {p.released ? 'Released' : 'Upcoming'}
+                </span>
+              </div>
+              <div className="rows">
+                <div className="row"><span>ID</span><span>{p.id}</span></div>
+                <div className="row"><span>Release date</span><span>{dateOnly(p.release_date)}</span></div>
+                <div className="row"><span>Availability</span><span>{p.in_stock ? 'Yes' : 'No'}</span></div>
+                <div className="row"><span>Created</span><span>{dateOnly(p.created_at)}</span></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /* ---------- LIST + FORM ---------- */
   const f = editing || {};
 
   return (
@@ -144,7 +191,7 @@ export default function Home() {
               <span className="muted">Release: {dateOnly(p.release_date)}</span>
             </div>
             <div className="product-actions">
-              <Link href={`/product?id=${p.id}`} className="btn">View</Link>
+              <a href={`/?id=${p.id}`} className="btn">View</a>
               <button type="button" className="secondary" onClick={() => startEdit(p)}>Edit</button>
               <button type="button" className="danger" onClick={() => remove(p.id)}>Delete</button>
             </div>
