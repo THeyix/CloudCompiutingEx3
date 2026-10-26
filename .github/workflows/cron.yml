@@ -1,4 +1,3 @@
-
 name: Daily Product Release Cron
 
 on:
@@ -15,10 +14,15 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           APP_URL: ${{ secrets.APP_URL || vars.APP_URL }}
         run: |
+          set -e
           test -n "$APP_URL"
-          response=$(curl -sS -w "\n%{http_code}" \
+          test -n "$CRON_SECRET"
+
+          response=$(curl -sS -L \
+            -w "\n%{http_code}" \
             -H "Authorization: Bearer $CRON_SECRET" \
             "$APP_URL/api/cron")
+
           echo "$response"
           code=$(echo "$response" | tail -n1)
           test "$code" = "200"
