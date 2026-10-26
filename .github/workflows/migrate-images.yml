@@ -1,0 +1,31 @@
+
+name: Migrate Vercel Blob images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Migrate images to Cloudinary
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          MIGRATION_SECRET: ${{ secrets.MIGRATION_SECRET }}
+        run: |
+          set -e
+
+          response=$(curl -fsS \
+            -X POST \
+            -H "Authorization: Bearer $MIGRATION_SECRET" \
+            "$APP_URL/api/migrate-images")
+
+          echo "$response"
+
+          failed=$(echo "$response" | jq '.failed')
+          remaining=$(echo "$response" | jq '.remaining')
+
+          if [ "$failed" -gt 0 ] || [ "$remaining" -gt 0 ]; then
+            echo "Some images still need migration."
+            exit 1
+          fi
